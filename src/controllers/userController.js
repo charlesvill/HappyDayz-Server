@@ -1,5 +1,10 @@
-const prisma = require('../../prisma/prisma.js');
 const bcrypt = require('bcryptjs');
+const {
+  createUser,
+  updateUser,
+  getUserData,
+  deleteUserEntry,
+} = require('../models/user.model.js');
 const { InternalServerError, BadRequestError } = require('../utils/err.js');
 
 async function createNewUser(req, res, next) {
@@ -12,22 +17,21 @@ async function createNewUser(req, res, next) {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const response = await prisma.user.create({
-      data: {
-        username,
-        first_name,
-        last_name,
-        hash: hashedPassword,
-      },
+    const response = await createUser({
+      username,
+      first_name,
+      last_name,
+      hash: hashedPassword,
     });
+
     console.log('user successfully created!', response);
-    res.json(response);
+    res.status(201).json(response);
   } catch (error) {
     return next(new InternalServerError(error.message));
   }
 }
 
-async function updateUser(req, res, next) {
+async function updateUserController(req, res, next) {
   // get the username, id, first/last name pass & conf pass from body
   const { id, username, first_name, last_name, password, confirm_pass } =
     req.body;
@@ -38,20 +42,15 @@ async function updateUser(req, res, next) {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const response = await prisma.user.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        username,
-        first_name,
-        last_name,
-        hash: hashedPassword,
-      },
+    const response = await updateUser(id, {
+      username,
+      first_name,
+      last_name,
+      hash: hashedPassword,
     });
 
     console.log('User successfully updated!', response);
-    res.redirect('/log-in');
+    res.status(200).json(response);
   } catch (error) {
     return next(new InternalServerError(error.message));
   }
@@ -61,17 +60,13 @@ async function updateUser(req, res, next) {
 }
 
 // added token verification MW for testing JWT Autentication
-async function readUserData(req, user, next) {
+async function readUserData(req, res, next) {
   const { id } = req.body;
 
   try {
-    const response = await prisma.user.findUnique({
-      where: {
-        id: Number(id),
-      },
-      // should include other data pertinent to events
-    });
-    res.json(response);
+    const response = await getUserData(id);
+
+    res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err.message));
   }
@@ -81,20 +76,16 @@ async function deleteUser(req, user, next) {
   const { id } = req.body;
 
   try {
-    const response = await prisma.user.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    const response = await deleteUserEntry(id);
     console.log('successful deletion!', response);
-    res.json(response);
+    res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err.message));
   }
 }
 module.exports = {
   createNewUser,
-  updateUser,
+  updateUserController,
   readUserData,
   deleteUser,
 };
