@@ -9,6 +9,8 @@ const {
 
 const userRouter = Router();
 
+userRouter.put('/', createNewUser);
+
 userRouter.get(
   '/',
   passport.authenticate('jwt', { session: false }),
@@ -18,10 +20,20 @@ userRouter.get(
   }
 );
 
-userRouter.post('/', createNewUser);
+userRouter.post(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  createNewUser
+);
 
-userRouter.put('/', updateUser);
+userRouter.delete(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  deleteUser
+);
 
-userRouter.delete('/', deleteUser);
+userRouter.get('/test', (req, res) => {
+  res.status(200).json({ test: 'success' });
+});
 
 module.exports = userRouter;
