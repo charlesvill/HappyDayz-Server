@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int      @id @default(autoincrement())
+  username           String   @unique
+  first_name         String
+  last_name          String?
+  hash               String
+  account_created_at DateTime @default(now())
+  events             Event[]
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  name        String
+  Description String?
+  StartDate   DateTime
+  endDate     DateTime?
+  location    Json?
+  host        User      @relation(fields: [host_id], references: id)
+  host_id     Int
+  pages       Page[]
+  guests      Guest[]
+}
+
+model Page {
+  id       Int      @id @default(autoincrement())
+  title    String
+  type     String
+  slug     String
+  order    Int
+  event    Event    @relation(fields: [event_id], references: id)
+  event_id Int
+  module   Module[]
+}
+
+model Guest {
+  id           Int     @id @default(autoincrement())
+  first_name   String
+  last_name    String?
+  phone_number String?
+  email        String?
+  event        Event   @relation(fields: [event_id], references: id)
+  event_id     Int
+}
+
+model Module {
+  id      Int    @id @default(autoincrement())
+  type    String
+  order   Int
+  data    Json
+  page    Page   @relation(fields: [page_id], references: id)
+  page_id Int
+}
