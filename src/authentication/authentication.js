@@ -1,4 +1,4 @@
-const prisma = require('../models/prisma');
+const prisma = require('../../prisma/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { BadRequestError } = require('../utils/err');
@@ -15,7 +15,7 @@ async function authenticateUser(req, res, next) {
     });
 
     if (!user) {
-      throw new BadRequestError('Username incorrect!');
+      return next(new BadRequestError('Username incorrect!'));
     }
     const match = await bcrypt.compare(password, user.hash);
 
@@ -28,14 +28,15 @@ async function authenticateUser(req, res, next) {
     // jwt sign token and respond with token
     const token = jwt.sign({ sub: user.id }, secret, opts);
 
+    const { hash, ...safeUser } = user;
     return res.status(200).json({
       message: 'Auth passed',
       token,
-      user,
+      safeUser,
     });
   } catch (err) {
     return next(err);
   }
 }
 
-module.exports = { authenticateUser };
+module.exports = authenticateUser;

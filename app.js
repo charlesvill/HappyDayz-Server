@@ -3,6 +3,7 @@ const path = require('path');
 const { NotFoundError } = require('./src/utils/err.js');
 // const passport = require('./authentication/passport-config.js');
 const userRouter = require('./src/routes/userRouter.js');
+const authRouter = require('./src/routes/authRouter.js');
 
 require('dotenv').config();
 const cors = require('cors');
@@ -25,6 +26,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/user', userRouter);
+
+app.use('/auth', authRouter);
 
 app.use((req, res, next) => {
   return next(new NotFoundError(`404: Not Found! path: ${req.path}`));
