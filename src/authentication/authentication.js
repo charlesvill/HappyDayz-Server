@@ -23,7 +23,7 @@ async function authenticateUser(req, res, next) {
       return next(new BadRequestError('Password incorrect!'));
     }
     const opts = {};
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env.JWT_SECRET || 'testsecret';
     opts.expiresIn = tokenExpiresIn;
     // jwt sign token and respond with token
     const token = jwt.sign({ sub: user.id }, secret, opts);
@@ -32,7 +32,7 @@ async function authenticateUser(req, res, next) {
     return res.status(200).json({
       message: 'Auth passed',
       token,
-      safeUser,
+      user: safeUser,
     });
   } catch (err) {
     return next(err);

@@ -1,21 +1,23 @@
 require('dotenv').config();
 const prisma = require('../prisma');
+const bcrypt = require('bcryptjs');
 
 async function seedDb() {
   console.log(`running in the ${process.env.NODE_ENV} environment`);
 
   const dataExists = await prisma.user.findUnique({
     where: {
-      username: 'jdoe123',
+      username: 'fbaz123',
     },
   });
   if (!dataExists || dataExists.length < 1) {
+    const hashedPassword = await bcrypt.hash('1234', 10);
     const user = await prisma.user.create({
       data: {
-        username: 'jdoe123',
-        first_name: 'John',
-        last_name: 'Doe',
-        hash: '$2a$10$abcdefghijklmnopqrstuv',
+        username: 'fbaz123',
+        first_name: 'Foo',
+        last_name: 'Baz',
+        hash: hashedPassword,
       },
     });
 
