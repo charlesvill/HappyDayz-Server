@@ -7,24 +7,28 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "test": "npx jest"
+    "dev": "NODE_ENV=development && node --watch app.js",
+    "test": "NODE_ENV=test && npx jest",
+    "deploy": "NODE_ENV=production && node prisma/seed/seedData.js && node --watch app.js"
   },
-  "devDependencies": {
-    "@eslint/js": "^9.33.0",
+  "dependencies": {
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
-    "eslint": "^9.33.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
     "express": "^5.1.0",
-    "globals": "^16.3.0",
-    "jest": "^30.0.5",
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
-    "path": "^0.12.7",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.3.0",
+    "jest": "^30.0.5",
     "prettier": "^3.6.2",
     "prisma": "^6.14.0",
     "supertest": "^7.1.4"
