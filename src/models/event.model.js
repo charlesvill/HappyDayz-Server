@@ -25,11 +25,10 @@ async function createEvent(
   });
 }
 
-async function readEventById(userId, eventId) {
+async function readEventById(eventId) {
   return prisma.event.findUnique({
     where: {
       id: Number(eventId),
-      host_id: Number(userId),
     },
   });
 }
@@ -57,4 +56,18 @@ async function updateEventRow(
     },
   });
 }
-module.exports = { createEvent, readEventById, updateEventRow };
+
+async function deleteEventById(eventId) {
+  return prisma.event.delete({
+    where: {
+      id: Number(eventId),
+    },
+  });
+}
+
+module.exports = {
+  createEvent,
+  readEventById,
+  updateEventRow,
+  deleteEventById,
+};

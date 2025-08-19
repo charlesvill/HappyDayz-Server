@@ -1,26 +1,21 @@
 const authRouter = require('../routes/authRouter');
 const userRouter = require('../routes/userRouter');
 const prisma = require('../../prisma/prisma');
+const { user, errorMiddleWare } = require('./test_utils/test_utils');
 
 const request = require('supertest');
 const express = require('express');
 
 describe('auth works', function () {
   const app = express();
-  const user = { username: 'fbaz123', password: '1234' };
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
   app.use('/auth', authRouter);
   app.use('/user', userRouter);
-  app.use((err, req, res, next) => {
-    console.error(err);
-    res
-      .status(err.statusCode || 500)
-      .send(err.name + ' ' + err.statusCode + ': ' + err.message);
-  });
+  app.use(errorMiddleWare);
 
-  it('returns success response on sign in', async () => {
+  it('signs in and has access to protected route', () => {
     return request(app)
       .post('/auth')
       .send(user)

@@ -1,6 +1,11 @@
 const { Router } = require('express');
 const passport = require('../authentication/passport-config');
-const { addEvent, getEventById } = require('../controllers/eventController');
+const {
+  addEvent,
+  getEventById,
+  updateEvent,
+  deleteEvent,
+} = require('../controllers/eventController');
 
 const eventRouter = Router();
 
@@ -10,13 +15,23 @@ eventRouter.post(
   addEvent
 );
 
-//expects ?userid=#
 eventRouter.get(
-  '/:eventid',
+  '/:userid/:eventid',
   passport.authenticate('jwt', { session: false }),
   getEventById
 );
 
+eventRouter.put(
+  '/:userid/:eventid',
+  passport.authenticate('jwt', { session: false }),
+  updateEvent
+);
+
+eventRouter.delete(
+  '/:userid/:eventid',
+  passport.authenticate('jwt', { session: false }),
+  deleteEvent
+);
 module.exports = eventRouter;
 
 // create, read, update and delete events
