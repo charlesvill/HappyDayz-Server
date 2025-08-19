@@ -26,8 +26,8 @@ model User {
 model Event {
   id          Int       @id @default(autoincrement())
   name        String
-  Description String?
-  StartDate   DateTime
+  description String?
+  startDate   DateTime
   endDate     DateTime?
   location    Json?
   host        User      @relation(fields: [host_id], references: id)

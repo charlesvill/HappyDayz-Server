@@ -24,9 +24,9 @@ async function seedDb() {
     const event = await prisma.event.create({
       data: {
         name: 'Tech Summit 2025',
-        Description:
+        description:
           'Annual technology summit with talks, panels, and networking.',
-        StartDate: new Date('2025-09-15T09:00:00.000Z').toISOString(),
+        startDate: new Date('2025-09-15T09:00:00.000Z').toISOString(),
         endDate: new Date('2025-09-17T17:00:00.000Z').toISOString(),
         location: {
           city: 'San Francisco',
