@@ -34,7 +34,6 @@ async function readEventById(eventId) {
 }
 
 async function updateEventRow(
-  userId,
   eventId,
   name,
   description,
@@ -45,7 +44,6 @@ async function updateEventRow(
   return prisma.event.update({
     where: {
       id: Number(eventId),
-      host_id: Number(userId),
     },
     data: {
       name,

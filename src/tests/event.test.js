@@ -11,6 +11,7 @@ describe('event router and controllers work', function () {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
+  app.use('/auth', authRouter);
   app.use('/event', eventRouter);
   app.use(errorMiddleWare);
 
@@ -25,7 +26,7 @@ describe('event router and controllers work', function () {
       .expect(200)
       .then((response) => {
         token = response.body.token;
-        userId = response.body.id;
+        userId = response.body.user.id;
         return request(app)
           .post(`/event/${userId}`)
           .set('Authorization', `Bearer ${token}`)
@@ -38,6 +39,7 @@ describe('event router and controllers work', function () {
           .expect(200)
           .then((response) => {
             eventId = response.body.id;
+            console.log('event id:', eventId);
             expect(response.body.name).toEqual('birthday');
           });
       });

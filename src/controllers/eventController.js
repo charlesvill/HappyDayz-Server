@@ -3,7 +3,7 @@ const {
   createEvent,
   readEventById,
   updateEventRow,
-  deleteEventById, 
+  deleteEventById,
 } = require('../models/event.model');
 const {
   InternalServerError,
@@ -16,10 +16,10 @@ async function userOwnsEvent(userId, eventId) {
   if (!event || event.length === 0) {
     return { status: 404 };
   }
-  if (event.host_id !== userId) {
+  if (Number(event.host_id) !== Number(userId)) {
     return { status: 403 };
   }
-  return { status: 400, event };
+  return { status: 200, event };
 }
 
 // create
@@ -47,7 +47,7 @@ async function addEvent(req, res, next) {
 // read
 async function getEventById(req, res, next) {
   const eventId = req.params.eventid;
-  const userId = req.query.userid;
+  const userId = req.params.userid;
 
   if (!userId) {
     return next(new NotFoundError('Not found! requires userid'));
@@ -74,7 +74,7 @@ async function updateEvent(req, res, next) {
 
   try {
     const eventObject = await userOwnsEvent(userId, eventId);
-    if (eventObject.status === 400) {
+    if (eventObject.status === 404) {
       return next(new NotFoundError('event not found'));
     }
     if (eventObject.status === 403) {
@@ -83,7 +83,7 @@ async function updateEvent(req, res, next) {
       );
     }
     const response = await updateEventRow(
-      userId,
+      eventId,
       name,
       description,
       startDate,
@@ -105,7 +105,7 @@ async function deleteEvent(req, res, next) {
 
   try {
     const eventObject = await userOwnsEvent(userId, eventId);
-    if ((eventObject.status = 404)) {
+    if (eventObject.status === 404) {
       return next(new NotFoundError('event not found'));
     }
     if (eventObject.status === 403) {
@@ -114,6 +114,8 @@ async function deleteEvent(req, res, next) {
       );
     }
     const response = await deleteEventById(eventId);
+    console.log('successful delete');
+    console.log(response);
     res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err));
