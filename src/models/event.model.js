@@ -1,21 +1,10 @@
 const prisma = require('../../prisma/prisma');
 const { connect } = require('../routes/authRouter');
 
-async function createEvent(
-  userId,
-  name,
-  description,
-  startDate,
-  endDate,
-  location
-) {
+async function createEvent(userId, eventData) {
   return prisma.event.create({
     data: {
-      name,
-      description,
-      startDate,
-      endDate,
-      location,
+      ...eventData,
       host: {
         connect: {
           id: Number(userId),
@@ -33,25 +22,12 @@ async function readEventById(eventId) {
   });
 }
 
-async function updateEventRow(
-  eventId,
-  name,
-  description,
-  startDate,
-  endDate,
-  location
-) {
+async function updateEventRow(eventId, eventData) {
   return prisma.event.update({
     where: {
       id: Number(eventId),
     },
-    data: {
-      name,
-      description,
-      startDate,
-      endDate,
-      location,
-    },
+    data: eventData,
   });
 }
 

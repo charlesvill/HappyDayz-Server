@@ -29,14 +29,13 @@ async function addEvent(req, res, next) {
   const userId = req.params.userid;
 
   try {
-    const response = await createEvent(
-      userId,
+    const response = await createEvent(userId, {
       name,
       description,
       startDate,
       endDate,
-      location
-    );
+      location,
+    });
 
     res.status(200).json(response);
   } catch (err) {
@@ -48,6 +47,7 @@ async function addEvent(req, res, next) {
 async function getEventById(req, res, next) {
   const eventId = req.params.eventid;
   const userId = req.params.userid;
+  const guestCode = req.query.guest;
 
   if (!userId) {
     return next(new NotFoundError('Not found! requires userid'));
@@ -56,6 +56,9 @@ async function getEventById(req, res, next) {
     const response = await userOwnsEvent(userId, eventId);
     if (response.status === 404) {
       return next(new NotFoundError('could not find event'));
+    }
+    if (guestCode) {
+      // instead of searching for ownership, check code in guest list and return event if found
     }
     if (response.status === 403) {
       return next(new ForbiddenError('You do not have access to that event'));
@@ -82,14 +85,13 @@ async function updateEvent(req, res, next) {
         new ForbiddenError('You do not have access to edit this event')
       );
     }
-    const response = await updateEventRow(
-      eventId,
+    const response = await updateEventRow(eventId, {
       name,
       description,
       startDate,
       endDate,
-      location
-    );
+      location,
+    });
 
     res.status(200).json(response);
   } catch (err) {
