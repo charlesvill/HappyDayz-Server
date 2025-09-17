@@ -2,14 +2,14 @@ const { Router } = require('express');
 const passport = require('../authentication/passport-config');
 const {
   createNewUser,
-  updateUser,
+  updateUserController,
   // readUserData,
   deleteUser,
 } = require('../controllers/userController');
 
 const userRouter = Router();
 
-userRouter.put('/', createNewUser);
+userRouter.post('/', createNewUser);
 
 userRouter.get(
   '/',
@@ -22,10 +22,10 @@ userRouter.get(
   }
 );
 
-userRouter.post(
+userRouter.put(
   '/',
   passport.authenticate('jwt', { session: false }),
-  createNewUser
+  updateUserController
 );
 
 userRouter.delete(

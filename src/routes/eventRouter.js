@@ -15,6 +15,7 @@ eventRouter.post(
   addEvent
 );
 
+// case: ?guest=code
 eventRouter.get(
   '/:userid/:eventid',
   passport.authenticate('jwt', { session: false }),
