@@ -9,8 +9,17 @@ async function getPageById(pageId) {
 }
 
 async function createPage(eventId, pageData) {
+  // instantiate a cmpu
+  // locate modules
   return prisma.page.create({
-    data: pageData,
+    data: {
+      ...pageData,
+      event: {
+        connect: {
+          id: Number(eventId),
+        },
+      },
+    },
   });
 }
 

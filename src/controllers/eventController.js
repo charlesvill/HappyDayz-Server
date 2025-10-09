@@ -1,4 +1,6 @@
-// events
+// events.controller.js
+// this page was modified check inputs and outputs are consistent with usecase applications
+
 const {
   createEvent,
   readEventById,
@@ -11,6 +13,9 @@ const {
   ForbiddenError,
 } = require('../utils/err');
 
+const eventService = require('../services/eventService');
+
+// Utility: check if user owns event
 async function userOwnsEvent(userId, eventId) {
   const event = await readEventById(eventId);
   if (!event || event.length === 0) {
@@ -22,28 +27,21 @@ async function userOwnsEvent(userId, eventId) {
   return { status: 200, event };
 }
 
-// create
-
+// CREATE
 async function addEvent(req, res, next) {
   const { name, description, startDate, endDate, location } = req.body;
   const userId = req.params.userid;
 
   try {
-    const response = await createEvent(userId, {
-      name,
-      description,
-      startDate,
-      endDate,
-      location,
-    });
-
-    res.status(200).json(response);
+    const body = { name, description, startDate, endDate, location };
+    const eventResponse = await eventService(userId, body);
+    res.status(200).json(eventResponse);
   } catch (err) {
     return next(new InternalServerError(err));
   }
 }
 
-// read
+// READ
 async function getEventById(req, res, next) {
   const eventId = req.params.eventid;
   const userId = req.params.userid;
@@ -52,24 +50,26 @@ async function getEventById(req, res, next) {
   if (!userId) {
     return next(new NotFoundError('Not found! requires userid'));
   }
+
   try {
     const response = await userOwnsEvent(userId, eventId);
+
     if (response.status === 404) {
       return next(new NotFoundError('could not find event'));
     }
-    if (guestCode) {
-      // instead of searching for ownership, check code in guest list and return event if found
-    }
-    if (response.status === 403) {
+
+    // If guestCode is provided, you can later handle guest logic here
+    if (guestCode && response.status === 403) {
       return next(new ForbiddenError('You do not have access to that event'));
     }
+
     res.status(200).json(response.event);
   } catch (err) {
     return next(new InternalServerError(err));
   }
 }
 
-// update
+// UPDATE
 async function updateEvent(req, res, next) {
   const { name, description, startDate, endDate, location } = req.body;
   const userId = req.params.userid;
@@ -85,6 +85,7 @@ async function updateEvent(req, res, next) {
         new ForbiddenError('You do not have access to edit this event')
       );
     }
+
     const response = await updateEventRow(eventId, {
       name,
       description,
@@ -99,8 +100,7 @@ async function updateEvent(req, res, next) {
   }
 }
 
-// delete
-
+// DELETE
 async function deleteEvent(req, res, next) {
   const userId = req.params.userid;
   const eventId = req.params.eventid;
@@ -115,12 +115,15 @@ async function deleteEvent(req, res, next) {
         new ForbiddenError('You do not have access to manipulate this event')
       );
     }
+
     const response = await deleteEventById(eventId);
     console.log('successful delete');
     console.log(response);
+
     res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err));
   }
 }
+
 module.exports = { addEvent, getEventById, updateEvent, deleteEvent };
