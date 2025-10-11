@@ -41,7 +41,7 @@ async function seedDb() {
               type: 'info',
               slug: 'welcome',
               order: 1,
-              module: {
+              modules: {
                 create: [
                   {
                     type: 'text',
@@ -67,7 +67,7 @@ async function seedDb() {
               type: 'agenda',
               slug: 'schedule',
               order: 2,
-              module: {
+              modules: {
                 create: [
                   {
                     type: 'agenda',

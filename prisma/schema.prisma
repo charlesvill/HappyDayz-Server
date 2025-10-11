@@ -44,7 +44,7 @@ model Page {
   order    Int
   event    Event    @relation(fields: [event_id], references: id)
   event_id Int
-  module   Module[]
+  modules   Module[]
 }
 
 model Guest {
