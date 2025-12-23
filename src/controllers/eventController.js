@@ -18,7 +18,7 @@ const eventService = require('../services/eventService');
 // Utility: check if user owns event
 async function userOwnsEvent(userId, eventId) {
   const event = await readEventById(eventId);
-  if (!event || event.length === 0) {
+  if (!event) {
     return { status: 404 };
   }
   if (Number(event.host_id) !== Number(userId)) {
@@ -31,6 +31,7 @@ async function userOwnsEvent(userId, eventId) {
 async function addEvent(req, res, next) {
   const { name, description, startDate, endDate, location } = req.body;
   const userId = req.params.userid;
+  console.log('userId here is: ', userId);
 
   try {
     const body = { name, description, startDate, endDate, location };
@@ -47,8 +48,15 @@ async function getEventById(req, res, next) {
   const userId = req.params.userid;
   const guestCode = req.query.guest;
 
+  console.log('eventID in get Event: ', eventId);
+  console.log('userID in get Event: ', userId);
+
   if (!userId) {
     return next(new NotFoundError('Not found! requires userid'));
+  }
+
+  if (!eventId) {
+    return next(new NotFoundError('Not found! missing eventId'));
   }
 
   try {

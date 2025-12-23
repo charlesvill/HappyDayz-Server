@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-require('dotenv').config();
+require('dotenv').config({ override: false });
 
 const dbURL =
   process.env.NODE_ENV === 'test'

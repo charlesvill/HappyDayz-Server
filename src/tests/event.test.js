@@ -45,6 +45,8 @@ describe('event router and controllers work', function () {
       });
   });
 
+  // reading an event depends on the success of the previous test
+  // eventId assigned if and only if 200 on above query
   it('reads an event', () => {
     return request(app)
       .get(`/event/${userId}/${eventId}`)

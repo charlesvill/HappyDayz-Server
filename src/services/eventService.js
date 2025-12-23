@@ -1,14 +1,18 @@
 // import prisma
 const prisma = require('../../prisma/prisma');
-const { connect } = require('../routes/authRouter');
+// const { connect } = require('../routes/authRouter');
 
+//edited 12/22/26 to eventBuilder format in front end utility fn
+//
+//will need to check data fidelity passed to prisma addEvent with the json created
+//by front end
 //
 async function eventService(userId, body) {
   // takes the data set
   const result = await prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
       data: {
-        ...body.event,
+        ...body.fields,
         host: {
           connect: {
             id: Number(userId),
@@ -18,14 +22,15 @@ async function eventService(userId, body) {
     });
     // check if there are pages in event.pages
     // return event object otherwise
-    if (!event?.pages.length) {
+    if (!body?.pages?.length) {
       return event;
     }
 
-    for (const page of event.pages) {
-      const newPage = tx.page.create({
+    for (const page of body.pages) {
+      const { modules, ...pageData } = page;
+      const newPage = await tx.page.create({
         data: {
-          ...page,
+          ...pageData,
           event: {
             connect: {
               id: Number(event.id),
@@ -34,15 +39,16 @@ async function eventService(userId, body) {
         },
       });
 
-      if (page?.modules.length) {
-        tx.module.createMany({
-          data: page.modules.map((m) => ({
+      //** need to check module column names, front end json object passed has html
+      //field
+      //
+
+      if (modules?.length) {
+        await tx.module.createMany({
+          data: modules.map((m) => ({
             ...m,
-            page: {
-              connect: {
-                id: Number(page.id),
-              },
-            },
+
+            page_id: Number(newPage.id),
           })),
         });
       }

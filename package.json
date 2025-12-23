@@ -7,9 +7,10 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "dev": "NODE_ENV=development && node --watch app.js",
-    "test": "NODE_ENV=test && npx jest",
-    "deploy": "NODE_ENV=production && node prisma/seed/seedData.js && node --watch app.js"
+    "dev": "NODE_ENV=development node --watch app.js",
+    "seedtest": "NODE_ENV=test npx prisma migrate dev --name seed && NODE_ENV=test node prisma/seed/seedData.js",
+    "test": "NODE_ENV=test npx jest",
+    "deploy": "NODE_ENV=production node prisma/seed/seedData.js && node --watch app.js"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",
