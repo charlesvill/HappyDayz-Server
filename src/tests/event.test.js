@@ -6,7 +6,7 @@ const { user, errorMiddleWare } = require('./test_utils/test_utils');
 const request = require('supertest');
 const express = require('express');
 
-describe('event router and controllers work', function () {
+describe('event router and controllers work', function() {
   const app = express();
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
@@ -70,6 +70,7 @@ describe('event router and controllers work', function () {
 
   // delete test
 
+  // ** reminder that the console is supposed to throw 404 error **
   it('deletes an event', () => {
     return request(app)
       .delete(`/event/${userId}/${eventId}`)

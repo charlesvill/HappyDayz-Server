@@ -18,6 +18,8 @@ const eventService = require('../services/eventService');
 // Utility: check if user owns event
 async function userOwnsEvent(userId, eventId) {
   const event = await readEventById(eventId);
+
+  console.log('event object inside userownsevent', event);
   if (!event) {
     return { status: 404 };
   }
@@ -29,12 +31,12 @@ async function userOwnsEvent(userId, eventId) {
 
 // CREATE
 async function addEvent(req, res, next) {
-  const { name, description, startDate, endDate, location } = req.body;
+  const { name, description, startDate, endDate, location, pages } = req.body;
   const userId = req.params.userid;
   console.log('userId here is: ', userId);
 
   try {
-    const body = { name, description, startDate, endDate, location };
+    const body = { name, description, startDate, endDate, location, pages };
     const eventResponse = await eventService(userId, body);
     res.status(200).json(eventResponse);
   } catch (err) {

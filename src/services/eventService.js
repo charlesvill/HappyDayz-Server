@@ -9,10 +9,11 @@ const prisma = require('../../prisma/prisma');
 //
 async function eventService(userId, body) {
   // takes the data set
+  const { hostName, pages, ...fields } = body;
   const result = await prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
       data: {
-        ...body.fields,
+        ...fields,
         host: {
           connect: {
             id: Number(userId),
@@ -22,11 +23,11 @@ async function eventService(userId, body) {
     });
     // check if there are pages in event.pages
     // return event object otherwise
-    if (!body?.pages?.length) {
+    if (!pages?.length) {
       return event;
     }
 
-    for (const page of body.pages) {
+    for (const page of pages) {
       const { modules, ...pageData } = page;
       const newPage = await tx.page.create({
         data: {
@@ -53,6 +54,7 @@ async function eventService(userId, body) {
         });
       }
     }
+    return event;
   });
   // starts the prisma transaction with cb fn
   // create event, get id
