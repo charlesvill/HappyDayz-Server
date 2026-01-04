@@ -1,14 +1,6 @@
-// import prisma
 const prisma = require('../../prisma/prisma');
-// const { connect } = require('../routes/authRouter');
 
-//edited 12/22/26 to eventBuilder format in front end utility fn
-//
-//will need to check data fidelity passed to prisma addEvent with the json created
-//by front end
-//
 async function eventService(userId, body) {
-  // takes the data set
   const { hostName, pages, ...fields } = body;
   const result = await prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
@@ -22,7 +14,6 @@ async function eventService(userId, body) {
       },
     });
     // check if there are pages in event.pages
-    // return event object otherwise
     if (!pages?.length) {
       return event;
     }
