@@ -42,9 +42,9 @@ model Page {
   type     String
   slug     String
   order    Int
-  event    Event    @relation(fields: [event_id], references: id)
+  event    Event    @relation(fields: [event_id], references: id, onDelete: Cascade)
   event_id Int
-  modules   Module[]
+  modules  Module[]
 }
 
 model Guest {
@@ -53,7 +53,7 @@ model Guest {
   last_name    String?
   phone_number String?
   email        String?
-  event        Event   @relation(fields: [event_id], references: id)
+  event        Event   @relation(fields: [event_id], references: id, onDelete: Cascade)
   event_id     Int
 }
 
@@ -62,6 +62,6 @@ model Module {
   type    String
   order   Int
   data    Json
-  page    Page   @relation(fields: [page_id], references: id)
+  page    Page   @relation(fields: [page_id], references: id, onDelete: Cascade)
   page_id Int
 }

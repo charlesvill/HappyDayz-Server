@@ -2,6 +2,7 @@ const eventRouter = require('../routes/eventRouter');
 const authRouter = require('../routes/authRouter');
 const prisma = require('../../prisma/prisma');
 const { user, errorMiddleWare } = require('./test_utils/test_utils');
+const { dummyRequest } = require('./dummyRequest');
 
 const request = require('supertest');
 const express = require('express');
@@ -30,16 +31,12 @@ describe('event router and controllers work', function() {
         return request(app)
           .post(`/event/${userId}`)
           .set('Authorization', `Bearer ${token}`)
-          .send({
-            name: 'birthday',
-            description: 'its your birthday.',
-            startDate: new Date().toISOString(),
-            location: 'amazon rainforest',
-          })
+          .send(dummyRequest)
           .expect(200)
           .then((response) => {
             eventId = response.body.id;
             console.log('event id:', eventId);
+            console.log('response body: ', response.body);
             expect(response.body.name).toEqual('birthday');
           });
       });
@@ -47,13 +44,19 @@ describe('event router and controllers work', function() {
 
   // reading an event depends on the success of the previous test
   // eventId assigned if and only if 200 on above query
-  it('reads an event', () => {
+  it('reads an events properties', () => {
     return request(app)
       .get(`/event/${userId}/${eventId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .then((response) => {
         expect(response.body.name).toEqual('birthday');
+        expect(Array.isArray(response.body.pages)).toBe(true);
+        expect(response.body.pages.length).toBe(dummyRequest.pages.length);
+        expect(Array.isArray(response.body.pages[0].modules)).toBe(true);
+        expect(response.body.pages[0].modules.length).toBe(
+          dummyRequest.pages[0].modules.length
+        );
       });
   });
 
@@ -72,6 +75,7 @@ describe('event router and controllers work', function() {
 
   // ** reminder that the console is supposed to throw 404 error **
   it('deletes an event', () => {
+    console.log('event id for delete: ', eventId);
     return request(app)
       .delete(`/event/${userId}/${eventId}`)
       .set('Authorization', `Bearer ${token}`)

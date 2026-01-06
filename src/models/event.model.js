@@ -19,6 +19,13 @@ async function readEventById(eventId) {
     where: {
       id: Number(eventId),
     },
+    include: {
+      pages: {
+        include: {
+          modules: true,
+        },
+      },
+    },
   });
 }
 

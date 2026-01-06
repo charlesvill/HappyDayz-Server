@@ -31,6 +31,7 @@ async function eventService(userId, body) {
         },
       });
 
+      console.log(newPage);
       //** need to check module column names, front end json object passed has html
       //field
       //
