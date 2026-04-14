@@ -4,6 +4,9 @@ const passport = require('passport');
 
 const pageRouter = Router();
 
+// 4/12 - getPage controller & route for photo album page
+// future revisions may include photo album router
+
 pageRouter.get(
   '/:userid/:eventid/:pageid',
   passport.authenticate('jwt', { session: false }),
