@@ -1,4 +1,4 @@
-const primsa = require('../../prisma/prisma');
+const prisma = require('../../prisma/prisma');
 const { connect } = require('../routes/pageRouter');
 const { getPageById } = require('./page.model');
 
