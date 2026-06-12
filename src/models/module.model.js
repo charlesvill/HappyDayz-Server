@@ -1,6 +1,4 @@
 const prisma = require('../../prisma/prisma');
-const { connect } = require('../routes/pageRouter');
-const { getPageById } = require('./page.model');
 
 async function getModuleById(moduleId) {
   return prisma.module.findUnique({
@@ -11,9 +9,17 @@ async function getModuleById(moduleId) {
 }
 
 async function createModule(pageId, moduleData) {
+  const moduleCount = await prisma.module.count({
+    where: {
+      page_id: Number(pageId),
+    },
+  });
+
   return prisma.module.create({
     data: {
-      ...moduleData,
+      type: moduleData.type,
+      order: moduleData.order ?? moduleCount + 1,
+      data: moduleData.data ?? moduleData,
       page: {
         connect: {
           id: Number(pageId),

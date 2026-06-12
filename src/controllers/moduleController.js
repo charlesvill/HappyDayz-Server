@@ -1,5 +1,5 @@
 const path = require('path');
-const { getModulebyId, createModule } = require('../models/module.model');
+const { createModule } = require('../models/module.model');
 const { InternalServerError } = require('../utils/err');
 
 async function addModule(req, res, next) {
@@ -11,30 +11,26 @@ async function addModule(req, res, next) {
     return res.status(400).json({ message: 'no file found!' });
   }
 
-  // module fields needed:
-  // type:img
-  // data object:
-  // title
-  // extension
-  // size
-  // alt text
-  // path
-
   const fileExt = path.extname(req.file.originalname).slice(1);
+  const title = path.basename(
+    req.file.originalname,
+    path.extname(req.file.originalname)
+  );
 
   const moduleData = {
-    title: 'filename',
-    extension: fileExt,
-    size: req.file.size,
-    alt: 'Event photo',
-    path: req.file.path,
+    type: 'image',
+    data: {
+      title,
+      extension: fileExt,
+      size: req.file.size,
+      alt: 'Event photo',
+      path: req.file.path,
+    },
   };
 
-  // record picture as module in db
-
   try {
-    const response = createModule(pageId, moduleData);
-    res.status(200).json(response);
+    const response = await createModule(pageId, moduleData);
+    return res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err));
   }
