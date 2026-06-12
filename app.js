@@ -6,6 +6,7 @@ const userRouter = require('./src/routes/userRouter.js');
 const authRouter = require('./src/routes/authRouter.js');
 const eventRouter = require('./src/routes/eventRouter.js');
 const pageRouter = require('./src/routes/pageRouter.js');
+const moduleRouter = require('./src/routes/moduleRouter.js');
 
 require('dotenv').config();
 const cors = require('cors');
@@ -34,6 +35,8 @@ app.use('/auth', authRouter);
 app.use('/event', eventRouter);
 
 app.use('/page', pageRouter);
+
+app.use('/upload', moduleRouter);
 
 app.use((req, res, next) => {
   return next(new NotFoundError(`404: Not Found! path: ${req.path}`));
