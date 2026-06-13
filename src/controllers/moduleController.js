@@ -5,7 +5,9 @@ const { InternalServerError } = require('../utils/err');
 async function addModule(req, res, next) {
   // const userId = req.params.userid; // guests uploading will not have userid
   // const eventId = req.params.eventid;
+  console.log('the current request: ',req);
   const pageId = req.params.pageid;
+
   // multer adds .file to req if failed,
   if (!req.file) {
     return res.status(400).json({ message: 'no file found!' });

@@ -36,7 +36,7 @@ app.use('/event', eventRouter);
 
 app.use('/page', pageRouter);
 
-app.use('/module/:eventid/:pageid', moduleRouter);
+app.use('/upload', moduleRouter);
 
 app.use((req, res, next) => {
   return next(new NotFoundError(`404: Not Found! path: ${req.path}`));
