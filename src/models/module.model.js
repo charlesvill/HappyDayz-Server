@@ -9,7 +9,7 @@ async function getModuleById(moduleId) {
 }
 
 async function createModule(pageId, moduleData) {
-  console.log(pageId, moduleData);
+  // console.log(pageId, moduleData);
   const moduleCount = await prisma.module.count({
     where: {
       page_id: Number(pageId),
