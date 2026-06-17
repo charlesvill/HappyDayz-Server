@@ -28,8 +28,8 @@ async function processImage(req, res, next) {
   const duration = (end - start) / 1000;
 
   console.log('Image processing took ', duration.toFixed(2), ' seconds');
-  // next();
-  res.send(200);
+  next();
+  // res.send(200);
 }
 
 async function addModule(req, res, next) {
@@ -45,6 +45,7 @@ async function addModule(req, res, next) {
   const batchDbInsertions = req.files.map(async (file) => {
     const fileExt = path.extname(file.originalname).slice(1);
     const title = path.basename(file.originalname, fileExt);
+    console.log(title);
 
     const moduleData = {
       type: 'image',
@@ -61,7 +62,7 @@ async function addModule(req, res, next) {
   });
 
   try {
-    await Promise.all(batchDbInsertions);
+    const response = await Promise.all(batchDbInsertions);
     return res.status(200).json(response);
   } catch (err) {
     return next(new InternalServerError(err));
