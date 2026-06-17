@@ -13,8 +13,8 @@ moduleRouter.post(
     console.log(req.files);
     next();
   },
-  processImage
-  // addModule
+  processImage,
+  addModule
 );
 
 module.exports = moduleRouter;
