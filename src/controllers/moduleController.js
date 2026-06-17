@@ -5,18 +5,31 @@ const { InternalServerError } = require('../utils/err');
 const { convertResizeImage } = require('../utils/processImage');
 
 async function processImage(req, res, next) {
-  const fileExt = path.extname(req.file.originalname).slice(1).toLowerCase();
-  console.log('File type: ', fileExt);
+  const start = performance.now();
+  const dirPath = './uploads';
+
+  const bufferPromises = req.files.map(async (file) => {
+    const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
+    const filebaseName = path.basename(file.originalname, fileExt);
+    console.log('File type: ', fileExt);
+    const webpBuffer = await convertResizeImage(file.buffer, fileExt);
+
+    await fs.writeFile(path.join(dirPath, `${filebaseName}.webp`), webpBuffer);
+    return webpBuffer;
+  });
 
   try {
-    const dirPath = './uploads';
-    const webpBuffer = await convertResizeImage(req.file.buffer, fileExt);
-
-    await fs.writeFile(path.join(dirPath, 'converted.webp'), webpBuffer);
+    const bufferResults = await Promise.all(bufferPromises);
+    console.log(bufferResults, ' here are the results!');
   } catch (err) {
     return next(new InternalServerError(err));
   }
-  next();
+  const end = performance.now();
+  const duration = (end - start) / 1000;
+
+  console.log('Image processing took ', duration.toFixed(2), ' seconds');
+  // next();
+  res.send(200);
 }
 
 async function addModule(req, res, next) {

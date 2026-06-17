@@ -8,14 +8,12 @@ const moduleRouter = Router();
 
 moduleRouter.post(
   '/photo/:eventid/:pageid',
-  upload.array('files[]', 6),
+  upload.array('files[]', 5),
   (req, res, next) => {
-    console.log(req.file);
-    console.log(req);
-
-    res.status(200).send('something should happen');
-  }
-  // processImage,
+    console.log(req.files);
+    next();
+  },
+  processImage
   // addModule
 );
 
