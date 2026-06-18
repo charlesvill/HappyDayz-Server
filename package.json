@@ -10,7 +10,7 @@
     "dev": "NODE_ENV=development node --watch app.js",
     "seedtest": "NODE_ENV=test npx prisma migrate dev --name seed && NODE_ENV=test node prisma/seed/seedData.js",
     "test": "NODE_ENV=test npx jest",
-    "deploy": "NODE_ENV=production node prisma/seed/seedData.js && node --watch app.js"
+    "seedmvp": "NODE_ENV=production node prisma/seed/mvpSeed.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
