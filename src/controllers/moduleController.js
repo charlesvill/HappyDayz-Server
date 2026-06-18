@@ -1,4 +1,5 @@
 const path = require('path');
+const { createWriteStream } = require('fs');
 const fs = require('fs/promises');
 const {
   createModule,
@@ -22,7 +23,7 @@ async function processImage(req, res, next) {
       console.log('before:', inputBuffer.length);
 
       inputBuffer = await convert({
-        buffer: file.buffer,
+        buffer: inputBuffer,
         format: 'JPEG',
         quality: 0.6,
       });
@@ -36,12 +37,16 @@ async function processImage(req, res, next) {
     );
 
     return new Promise((resolve, reject) => {
+      const writeStream = createWriteStream(outputPath);
+
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+
       sharp(inputBuffer)
         .resize({ width: 900, withoutEnlargement: true })
         .webp({ quality: 85 })
-        .pipe(fs.createWriteStream(outputPath))
-        .on('finish', resolve)
-        .on('error', reject);
+        .on('error', reject)
+        .pipe(writeStream);
     });
   });
 
