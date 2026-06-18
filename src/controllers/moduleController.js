@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs/promises');
-const { createModule } = require('../models/module.model');
+const { createModule, deleteModule: deleteModuleModel, getModuleById } = require('../models/module.model');
 const { InternalServerError } = require('../utils/err');
 const { convertResizeImage } = require('../utils/processImage');
 
@@ -69,7 +69,38 @@ async function addModule(req, res, next) {
   }
 }
 
+async function deleteModule(req, res, next) {
+  const { moduleid: moduleId, pageid: pageId } = req.params;
+
+  try {
+    // Get the module to retrieve file path before deletion
+    const module = await getModuleById(moduleId);
+    
+    if (!module) {
+      return res.status(404).json({ message: 'Module not found' });
+    }
+
+    // Delete the file from the filesystem if path exists
+    if (module.data?.path) {
+      try {
+        await fs.unlink(module.data.path);
+        console.log(`Deleted file: ${module.data.path}`);
+      } catch (fileErr) {
+        console.warn(`Warning: Could not delete file at ${module.data.path}:`, fileErr.message);
+        // Don't fail the entire delete operation if file deletion fails
+      }
+    }
+
+    // Delete the module from the database
+    const deletedModule = await deleteModuleModel(moduleId, pageId);
+    return res.status(200).json(deletedModule);
+  } catch (err) {
+    return next(new InternalServerError(err));
+  }
+}
+
 module.exports = {
   processImage,
   addModule,
+  deleteModule,
 };

@@ -30,4 +30,13 @@ async function createModule(pageId, moduleData) {
   });
 }
 
-module.exports = { getModuleById, createModule };
+async function deleteModule(moduleId, pageId) {
+  return prisma.module.delete({
+    where: {
+      id: Number(moduleId),
+      page_id: Number(pageId),
+    },
+  });
+}
+
+module.exports = { getModuleById, createModule, deleteModule };

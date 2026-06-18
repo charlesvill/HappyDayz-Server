@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { processImage, addModule } = require('../controllers/moduleController');
+const { processImage, addModule, deleteModule } = require('../controllers/moduleController');
 const upload = require('../utils/upload');
 
 const moduleRouter = Router();
@@ -16,5 +16,7 @@ moduleRouter.post(
   processImage,
   addModule
 );
+
+moduleRouter.delete('/photo/:eventid/:pageid/:moduleid', deleteModule);
 
 module.exports = moduleRouter;
