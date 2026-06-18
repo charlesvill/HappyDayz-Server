@@ -3,15 +3,19 @@ const prisma = require('../prisma');
 const bcrypt = require('bcryptjs');
 
 async function seedDb() {
-  console.log(`running in the ${process.env.NODE_ENV} environment`);
+  console.log(`running in ${process.env.NODE_ENV} environment`);
+
+  if (!process.env.PASSWORD) {
+    throw new Error('PASSWORD env var missing');
+  }
 
   const dataExists = await prisma.user.findUnique({
-    where: {
-      username: 'fbaz123',
-    },
+    where: { username: 'charlesvill' },
   });
-  if (!dataExists || dataExists.length < 1) {
-    const hashedPassword = await bcrypt.hash('1234', 10);
+
+  if (!dataExists) {
+    const hashedPassword = await bcrypt.hash(process.env.PASSWORD, 10);
+
     const user = await prisma.user.create({
       data: {
         username: 'charlesvill',
@@ -24,9 +28,9 @@ async function seedDb() {
     const event = await prisma.event.create({
       data: {
         name: 'Wedding 2026',
-        description: 'Celbrating Union',
-        startDate: new Date('2026-06-26T17:00:00.000Z').toISOString(),
-        endDate: new Date('2025-06-27T00:00:00.000Z').toISOString(),
+        description: 'Celebrating Union',
+        startDate: new Date('2026-06-26T17:00:00.000Z'),
+        endDate: new Date('2026-06-27T00:00:00.000Z'),
         location: {
           city: 'Los Angeles',
           venue: 'El Monte',
@@ -45,8 +49,8 @@ async function seedDb() {
                     type: 'text',
                     order: 1,
                     data: {
-                      heading: 'Thank you for coming to our celebration!',
-                      body: 'Share all your captured moments with us here!',
+                      heading: 'Thank you for coming!',
+                      body: 'Share your moments here!',
                     },
                   },
                   {
@@ -54,7 +58,7 @@ async function seedDb() {
                     order: 2,
                     data: {
                       url: 'https://example.com/banner.jpg',
-                      alt: 'Tech Summit Banner',
+                      alt: 'Banner',
                     },
                   },
                 ],
@@ -67,13 +71,11 @@ async function seedDb() {
             {
               first_name: 'Alice',
               last_name: 'Smith',
-              phone_number: '555-123-4567',
               email: 'alice@example.com',
             },
             {
               first_name: 'Bob',
               last_name: 'Johnson',
-              phone_number: '555-987-6543',
               email: 'bob@example.com',
             },
             {
@@ -86,17 +88,12 @@ async function seedDb() {
       },
     });
 
-    console.log('Seeded data:', { user, event });
+    console.log('Seeded:', { user, event });
   } else {
-    console.log('data should already exist!');
+    console.log('Data already exists');
   }
 }
 
 seedDb()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
