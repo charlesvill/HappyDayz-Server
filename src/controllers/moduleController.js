@@ -9,58 +9,91 @@ const {
 const sharp = require('sharp');
 const convert = require('heic-convert');
 const { InternalServerError } = require('../utils/err');
-const { convertResizeImage } = require('../utils/processImage');
 
-async function processImage(req, res, next) {
-  const start = performance.now();
-
-  const tasks = req.files.map(async (file) => {
-    const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
-
-    let inputBuffer = file.buffer;
-
-    if (fileExt === 'heic' || fileExt === 'heif') {
-      console.log('before:', inputBuffer.length);
-
-      inputBuffer = await convert({
-        buffer: inputBuffer,
-        format: 'JPEG',
-        quality: 0.6,
-      });
-
-      console.log('after:', inputBuffer.length);
-    }
-
+// Process a single file sequentially to minimize memory footprint
+async function processImageFile(file) {
+  const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
+  
+  // For HEIC/HEIF, convert to JPEG first with reduced quality
+  if (fileExt === 'heic' || fileExt === 'heif') {
+    console.log('Converting HEIC to JPEG...');
+    const jpegBuffer = await convert({
+      buffer: file.buffer,
+      format: 'JPEG',
+      quality: 0.6, // Lower quality to reduce size
+    });
+    // Clear original buffer reference
+    file.buffer = null;
+    
     const outputPath = path.join(
       './uploads',
-      `${Date.now()}-${file.originalname}.webp`
+      `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
     );
 
     return new Promise((resolve, reject) => {
       const writeStream = createWriteStream(outputPath);
-
-      writeStream.on('finish', resolve);
+      writeStream.on('finish', () => {
+        // Store processed file path on file object for later use
+        file.processedPath = outputPath;
+        resolve();
+      });
       writeStream.on('error', reject);
 
-      sharp(inputBuffer)
+      sharp(jpegBuffer)
+        .resize({ width: 900, withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .on('error', reject)
+        .pipe(writeStream);
+    });
+  } else {
+    // For other formats, process directly without intermediate buffer
+    const outputPath = path.join(
+      './uploads',
+      `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
+    );
+
+    return new Promise((resolve, reject) => {
+      const writeStream = createWriteStream(outputPath);
+      writeStream.on('finish', () => {
+        // Store processed file path on file object for later use
+        file.processedPath = outputPath;
+        resolve();
+      });
+      writeStream.on('error', reject);
+
+      sharp(file.buffer)
         .resize({ width: 900, withoutEnlargement: true })
         .webp({ quality: 85 })
         .on('error', reject)
         .pipe(writeStream);
     });
-  });
+  }
+}
+
+// Process images sequentially (not in parallel) to minimize memory on 1GB instance
+async function processImage(req, res, next) {
+  const start = performance.now();
+
+  if (!req.files || req.files.length === 0) {
+    return next();
+  }
 
   try {
-    await Promise.all(tasks);
+    // Process files one at a time instead of Promise.all
+    for (const file of req.files) {
+      await processImageFile(file);
+      // Explicitly free memory after each file
+      file.buffer = null;
+    }
+
+    console.log(
+      'Image processing took',
+      ((performance.now() - start) / 1000).toFixed(2),
+      'seconds'
+    );
   } catch (err) {
     return next(new InternalServerError(err));
   }
-
-  console.log(
-    'Image processing took',
-    ((performance.now() - start) / 1000).toFixed(2),
-    'seconds'
-  );
 
   next();
 }
@@ -84,11 +117,11 @@ async function addModule(req, res, next) {
       type: 'image',
       data: {
         title,
-        extension: fileExt,
-        size: file.size,
+        extension: 'webp', // All processed files are WebP
+        size: file.processedPath ? 'see_webp' : file.size, // Original size vs processed
         alt: 'Event photo',
-        // this will need to be updated when implemented in the cloud
-        path: file.path,
+        // Use the processed WebP path instead of original
+        path: file.processedPath || file.path,
       },
     };
     return await createModule(pageId, moduleData);
