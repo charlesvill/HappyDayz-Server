@@ -5,6 +5,8 @@ const {
   deleteModule: deleteModuleModel,
   getModuleById,
 } = require('../models/module.model');
+const sharp = require('sharp');
+const convert = require('heic-convert');
 const { InternalServerError } = require('../utils/err');
 const { convertResizeImage } = require('../utils/processImage');
 
