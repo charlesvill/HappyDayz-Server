@@ -1,35 +1,61 @@
 const path = require('path');
 const fs = require('fs/promises');
-const { createModule, deleteModule: deleteModuleModel, getModuleById } = require('../models/module.model');
+const {
+  createModule,
+  deleteModule: deleteModuleModel,
+  getModuleById,
+} = require('../models/module.model');
 const { InternalServerError } = require('../utils/err');
 const { convertResizeImage } = require('../utils/processImage');
 
 async function processImage(req, res, next) {
   const start = performance.now();
-  const dirPath = './uploads';
 
-  const bufferPromises = req.files.map(async (file) => {
+  const tasks = req.files.map(async (file) => {
     const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
-    const filebaseName = path.basename(file.originalname, fileExt);
-    console.log('File type: ', fileExt);
-    const webpBuffer = await convertResizeImage(file.buffer, fileExt);
 
-    await fs.writeFile(path.join(dirPath, `${filebaseName}.webp`), webpBuffer);
-    return webpBuffer;
+    let inputBuffer = file.buffer;
+
+    if (fileExt === 'heic' || fileExt === 'heif') {
+      console.log('before:', inputBuffer.length);
+
+      inputBuffer = await convert({
+        buffer: file.buffer,
+        format: 'JPEG',
+        quality: 0.6,
+      });
+
+      console.log('after:', inputBuffer.length);
+    }
+
+    const outputPath = path.join(
+      './uploads',
+      `${Date.now()}-${file.originalname}.webp`
+    );
+
+    return new Promise((resolve, reject) => {
+      sharp(inputBuffer)
+        .resize({ width: 900, withoutEnlargement: true })
+        .webp({ quality: 85 })
+        .pipe(fs.createWriteStream(outputPath))
+        .on('finish', resolve)
+        .on('error', reject);
+    });
   });
 
   try {
-    const bufferResults = await Promise.all(bufferPromises);
-    console.log(bufferResults, ' here are the results!');
+    await Promise.all(tasks);
   } catch (err) {
     return next(new InternalServerError(err));
   }
-  const end = performance.now();
-  const duration = (end - start) / 1000;
 
-  console.log('Image processing took ', duration.toFixed(2), ' seconds');
+  console.log(
+    'Image processing took',
+    ((performance.now() - start) / 1000).toFixed(2),
+    'seconds'
+  );
+
   next();
-  // res.send(200);
 }
 
 async function addModule(req, res, next) {
@@ -75,7 +101,7 @@ async function deleteModule(req, res, next) {
   try {
     // Get the module to retrieve file path before deletion
     const module = await getModuleById(moduleId);
-    
+
     if (!module) {
       return res.status(404).json({ message: 'Module not found' });
     }
@@ -86,7 +112,10 @@ async function deleteModule(req, res, next) {
         await fs.unlink(module.data.path);
         console.log(`Deleted file: ${module.data.path}`);
       } catch (fileErr) {
-        console.warn(`Warning: Could not delete file at ${module.data.path}:`, fileErr.message);
+        console.warn(
+          `Warning: Could not delete file at ${module.data.path}:`,
+          fileErr.message
+        );
         // Don't fail the entire delete operation if file deletion fails
       }
     }
