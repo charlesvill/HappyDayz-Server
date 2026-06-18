@@ -1,6 +1,7 @@
 const path = require('path');
 const { createWriteStream, createReadStream } = require('fs');
 const fs = require('fs/promises');
+const fsSync = require('fs');
 const {
   createModule,
   deleteModule: deleteModuleModel,
@@ -10,14 +11,19 @@ const sharp = require('sharp');
 const convert = require('heic-convert');
 const { InternalServerError } = require('../utils/err');
 
+// Use same uploads directory as upload.js
+const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+
 // Process a single file sequentially to minimize memory footprint
 // With diskStorage, files are already on disk at file.path (not in memory)
 async function processImageFile(file) {
   const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
   const outputPath = path.join(
-    './uploads',
+    uploadsDir,
     `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
   );
+  
+  console.log(`Processing file: ${file.path} → ${outputPath}`);
   
   // For HEIC/HEIF, convert to JPEG first with reduced quality
   if (fileExt === 'heic' || fileExt === 'heif') {
