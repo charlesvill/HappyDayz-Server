@@ -1,5 +1,5 @@
 const path = require('path');
-const { createWriteStream } = require('fs');
+const { createWriteStream, createReadStream } = require('fs');
 const fs = require('fs/promises');
 const {
   createModule,
@@ -11,59 +11,69 @@ const convert = require('heic-convert');
 const { InternalServerError } = require('../utils/err');
 
 // Process a single file sequentially to minimize memory footprint
+// With diskStorage, files are already on disk at file.path (not in memory)
 async function processImageFile(file) {
   const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
+  const outputPath = path.join(
+    './uploads',
+    `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
+  );
   
   // For HEIC/HEIF, convert to JPEG first with reduced quality
   if (fileExt === 'heic' || fileExt === 'heif') {
-    console.log('Converting HEIC to JPEG...');
-    const jpegBuffer = await convert({
-      buffer: file.buffer,
-      format: 'JPEG',
-      quality: 0.6, // Lower quality to reduce size
-    });
-    // Clear original buffer reference
-    file.buffer = null;
-    
-    const outputPath = path.join(
-      './uploads',
-      `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
-    );
-
-    return new Promise((resolve, reject) => {
-      const writeStream = createWriteStream(outputPath);
-      writeStream.on('finish', () => {
-        // Store processed file path on file object for later use
-        file.processedPath = outputPath;
-        resolve();
+    console.log('Converting HEIC to JPEG from disk:', file.path);
+    try {
+      // Read file from disk (multer put it there with diskStorage)
+      const fileBuffer = await fs.readFile(file.path);
+      const jpegBuffer = await convert({
+        buffer: fileBuffer,
+        format: 'JPEG',
+        quality: 0.6,
       });
-      writeStream.on('error', reject);
 
-      sharp(jpegBuffer)
-        .resize({ width: 900, withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .on('error', reject)
-        .pipe(writeStream);
-    });
+      return new Promise((resolve, reject) => {
+        const writeStream = createWriteStream(outputPath);
+        writeStream.on('finish', () => {
+          file.processedPath = outputPath;
+          // Delete original uploaded file to save disk space
+          fs.unlink(file.path).catch(err => 
+            console.warn(`Could not delete original: ${err.message}`)
+          );
+          resolve();
+        });
+        writeStream.on('error', reject);
+
+        sharp(jpegBuffer)
+          .resize({ width: 900, withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .on('error', reject)
+          .pipe(writeStream);
+      });
+    } catch (err) {
+      throw new Error(`HEIC conversion failed: ${err.message}`);
+    }
   } else {
-    // For other formats, process directly without intermediate buffer
-    const outputPath = path.join(
-      './uploads',
-      `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
-    );
-
+    // For other formats, read from disk and process
+    console.log('Processing image from disk:', file.path);
     return new Promise((resolve, reject) => {
+      const readStream = createReadStream(file.path);
       const writeStream = createWriteStream(outputPath);
+      
       writeStream.on('finish', () => {
-        // Store processed file path on file object for later use
         file.processedPath = outputPath;
+        // Delete original uploaded file to save disk space
+        fs.unlink(file.path).catch(err => 
+          console.warn(`Could not delete original: ${err.message}`)
+        );
         resolve();
       });
       writeStream.on('error', reject);
+      readStream.on('error', reject);
 
-      sharp(file.buffer)
-        .resize({ width: 900, withoutEnlargement: true })
-        .webp({ quality: 85 })
+      readStream
+        .pipe(sharp()
+          .resize({ width: 900, withoutEnlargement: true })
+          .webp({ quality: 85 }))
         .on('error', reject)
         .pipe(writeStream);
     });
@@ -82,8 +92,6 @@ async function processImage(req, res, next) {
     // Process files one at a time instead of Promise.all
     for (const file of req.files) {
       await processImageFile(file);
-      // Explicitly free memory after each file
-      file.buffer = null;
     }
 
     console.log(
