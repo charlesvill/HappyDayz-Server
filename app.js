@@ -38,6 +38,11 @@ app.use('/page', pageRouter);
 
 app.use('/upload', moduleRouter);
 
+app.use('/test', (req, res, next) => {
+  console.log('coming live from server');
+  res.status(200).send('coming live from server!');
+});
+
 app.use((req, res, next) => {
   return next(new NotFoundError(`404: Not Found! path: ${req.path}`));
 });
