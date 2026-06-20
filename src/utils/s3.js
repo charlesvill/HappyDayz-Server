@@ -30,4 +30,4 @@ async function deleteFile(key) {
   );
 }
 
-exports.module = { uploadFile, getFileUrl, deleteFile };
+module.exports = { uploadFile, getFileUrl, deleteFile };
