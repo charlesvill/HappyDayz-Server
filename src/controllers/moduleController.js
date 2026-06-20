@@ -9,81 +9,42 @@ const {
 } = require('../models/module.model');
 const sharp = require('sharp');
 const convert = require('heic-convert');
+const { uploadFile } = require('../utils/s3');
 const { InternalServerError } = require('../utils/err');
-
-// Use same uploads directory as upload.js
-const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
 
 // Process a single file sequentially to minimize memory footprint
 // With diskStorage, files are already on disk at file.path (not in memory)
 async function processImageFile(file) {
   const fileExt = path.extname(file.originalname).slice(1).toLowerCase();
-  const outputPath = path.join(
-    uploadsDir,
-    `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`
-  );
-  
-  console.log(`Processing file: ${file.path} → ${outputPath}`);
-  
+  const fileName = `${Date.now()}-${path.basename(file.originalname, path.extname(file.originalname))}.webp`;
+
+  let fileBuffer = await fs.readFile(file.path);
   // For HEIC/HEIF, convert to JPEG first with reduced quality
   if (fileExt === 'heic' || fileExt === 'heif') {
-    console.log('Converting HEIC to JPEG from disk:', file.path);
+    // Read file from disk (multer put it there with diskStorage)
     try {
-      // Read file from disk (multer put it there with diskStorage)
-      const fileBuffer = await fs.readFile(file.path);
-      const jpegBuffer = await convert({
+      fileBuffer = await convert({
         buffer: fileBuffer,
         format: 'JPEG',
         quality: 0.6,
       });
-
-      return new Promise((resolve, reject) => {
-        const writeStream = createWriteStream(outputPath);
-        writeStream.on('finish', () => {
-          file.processedPath = outputPath;
-          // Delete original uploaded file to save disk space
-          fs.unlink(file.path).catch(err => 
-            console.warn(`Could not delete original: ${err.message}`)
-          );
-          resolve();
-        });
-        writeStream.on('error', reject);
-
-        sharp(jpegBuffer)
-          .resize({ width: 900, withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .on('error', reject)
-          .pipe(writeStream);
-      });
     } catch (err) {
       throw new Error(`HEIC conversion failed: ${err.message}`);
     }
-  } else {
-    // For other formats, read from disk and process
-    console.log('Processing image from disk:', file.path);
-    return new Promise((resolve, reject) => {
-      const readStream = createReadStream(file.path);
-      const writeStream = createWriteStream(outputPath);
-      
-      writeStream.on('finish', () => {
-        file.processedPath = outputPath;
-        // Delete original uploaded file to save disk space
-        fs.unlink(file.path).catch(err => 
-          console.warn(`Could not delete original: ${err.message}`)
-        );
-        resolve();
-      });
-      writeStream.on('error', reject);
-      readStream.on('error', reject);
-
-      readStream
-        .pipe(sharp()
-          .resize({ width: 900, withoutEnlargement: true })
-          .webp({ quality: 85 }))
-        .on('error', reject)
-        .pipe(writeStream);
-    });
   }
+
+  let optimizedBuffer = await sharp(fileBuffer)
+    .resize({ width: 900, withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+
+  fileBuffer = null;
+  const awsKey = await uploadFile(fileName, optimizedBuffer, 'image/webp');
+  file.cloudKey = awsKey;
+  await fs
+    .unlink(file.path)
+    .catch((err) => console.warn(`Could not delete original: ${err.message}`));
+  optimizedBuffer = null;
 }
 
 // Process images sequentially (not in parallel) to minimize memory on 1GB instance
@@ -118,24 +79,21 @@ async function addModule(req, res, next) {
   // console.log('the current request: ',req);
   const pageId = req.params.pageid;
 
-  if (!req.files) {
+  if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'no file(s) found!' });
   }
 
   const batchDbInsertions = req.files.map(async (file) => {
-    const fileExt = path.extname(file.originalname).slice(1);
-    const title = path.basename(file.originalname, fileExt);
-    console.log(title);
+    const ext = path.extname(file.originalname);
+    const title = path.basename(file.originalname, ext);
 
     const moduleData = {
       type: 'image',
       data: {
         title,
         extension: 'webp', // All processed files are WebP
-        size: file.processedPath ? 'see_webp' : file.size, // Original size vs processed
         alt: 'Event photo',
-        // Use the processed WebP path instead of original
-        path: file.processedPath || file.path,
+        key: file.cloudKey,
       },
     };
     return await createModule(pageId, moduleData);
