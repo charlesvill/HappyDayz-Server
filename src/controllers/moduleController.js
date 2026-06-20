@@ -39,7 +39,11 @@ async function processImageFile(file) {
     .toBuffer();
 
   fileBuffer = null;
-  const awsKey = await uploadFile(fileName, optimizedBuffer, 'image/webp');
+  const awsKey = await uploadFile({
+    key: fileName,
+    buffer: optimizedBuffer,
+    contentType: 'image/webp',
+  });
   file.cloudKey = awsKey;
   await fs
     .unlink(file.path)

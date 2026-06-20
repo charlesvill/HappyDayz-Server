@@ -6,9 +6,8 @@ const s3 = require('../config/s3');
 
 async function uploadFile({ key, buffer, contentType }) {
   const command = new PutObjectCommand({
-    bucket: process.env.S3_BUCKET,
-    key: key,
-    // body: buffer will need to be refactored for streams
+    Bucket: process.env.S3_BUCKET,
+    Key: key,
     Body: buffer,
     ContentType: contentType,
   });
