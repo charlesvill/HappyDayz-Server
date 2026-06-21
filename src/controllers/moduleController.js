@@ -6,6 +6,7 @@ const {
   createModule,
   deleteModule: deleteModuleModel,
   getModuleById,
+  getModulesByPageId,
 } = require('../models/module.model');
 const sharp = require('sharp');
 const convert = require('heic-convert');
@@ -110,6 +111,16 @@ async function addModule(req, res, next) {
     return next(new InternalServerError(err));
   }
 }
+async function getAllByPage(req, res, next) {
+  const { eventid: eventId, pageid: pageId } = req.params;
+
+  try {
+    const response = await getModulesByPageId(pageId);
+    res.status(200).json(response);
+  } catch (err) {
+    return next(new InternalServerError(err));
+  }
+}
 
 async function deleteModule(req, res, next) {
   const { moduleid: moduleId, pageid: pageId } = req.params;
@@ -147,5 +158,6 @@ async function deleteModule(req, res, next) {
 module.exports = {
   processImage,
   addModule,
+  getAllByPage,
   deleteModule,
 };

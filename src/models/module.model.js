@@ -8,6 +8,17 @@ async function getModuleById(moduleId) {
   });
 }
 
+async function getModulesByPageId(pageId) {
+  return prisma.page.findUnique({
+    where: {
+      id: Number(pageId),
+    },
+    include: {
+      modules: true,
+    },
+  });
+}
+
 async function createModule(pageId, moduleData) {
   console.log(pageId, moduleData);
   const moduleCount = await prisma.module.count({
@@ -39,4 +50,9 @@ async function deleteModule(moduleId, pageId) {
   });
 }
 
-module.exports = { getModuleById, createModule, deleteModule };
+module.exports = {
+  getModuleById,
+  getModulesByPageId,
+  createModule,
+  deleteModule,
+};

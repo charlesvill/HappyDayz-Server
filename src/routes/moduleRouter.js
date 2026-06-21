@@ -1,5 +1,10 @@
 const { Router } = require('express');
-const { processImage, addModule, deleteModule } = require('../controllers/moduleController');
+const {
+  processImage,
+  addModule,
+  getAllByPage,
+  deleteModule,
+} = require('../controllers/moduleController');
 const upload = require('../utils/upload');
 
 const moduleRouter = Router();
@@ -16,6 +21,8 @@ moduleRouter.post(
   processImage,
   addModule
 );
+
+moduleRouter.get('/photo/:eventid/:pageid', getAllByPage);
 
 moduleRouter.delete('/photo/:eventid/:pageid/:moduleid', deleteModule);
 
