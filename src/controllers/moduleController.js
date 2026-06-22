@@ -131,8 +131,9 @@ async function getAllByPage(req, res, next) {
             }
             return {
               url: await getFileUrl(record.data.key),
-              name: record.data?.name,
-              caption: record.data?.caption,
+              data: record.data,
+              id: record?.id,
+              page_id: record?.page_id,
             };
           })
         )
