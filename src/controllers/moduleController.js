@@ -124,14 +124,18 @@ async function getAllByPage(req, res, next) {
 
     const signedUrls = response.modules?.length
       ? await Promise.all(
-        response.modules.map(async (record) => {
-          if (!record.data?.key) {
-            console.warn('Module missing key:', record.id);
-            return null;
-          }
-          return await getFileUrl(record.data.key);
-        })
-      )
+          response.modules.map(async (record) => {
+            if (!record.data?.key) {
+              console.warn('Module missing key:', record.id);
+              return null;
+            }
+            return {
+              url: await getFileUrl(record.data.key),
+              name: record.data?.name,
+              caption: record.data?.caption,
+            };
+          })
+        )
       : [];
 
     res.status(200).json(signedUrls);
