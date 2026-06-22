@@ -83,6 +83,7 @@ async function addModule(req, res, next) {
   // const eventId = req.params.eventid;
   // console.log('the current request: ',req);
   const pageId = req.params.pageid;
+  const fieldData = req.body;
 
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'no file(s) found!' });
@@ -96,6 +97,8 @@ async function addModule(req, res, next) {
       type: 'image',
       data: {
         title,
+        name: fieldData?.name,
+        caption: fieldData?.caption,
         extension: 'webp', // All processed files are WebP
         alt: 'Event photo',
         key: file.cloudKey,
@@ -121,14 +124,14 @@ async function getAllByPage(req, res, next) {
 
     const signedUrls = response.modules?.length
       ? await Promise.all(
-          response.modules.map(async (record) => {
-            if (!record.data?.key) {
-              console.warn('Module missing key:', record.id);
-              return null;
-            }
-            return await getFileUrl(record.data.key);
-          })
-        )
+        response.modules.map(async (record) => {
+          if (!record.data?.key) {
+            console.warn('Module missing key:', record.id);
+            return null;
+          }
+          return await getFileUrl(record.data.key);
+        })
+      )
       : [];
 
     res.status(200).json(signedUrls);
