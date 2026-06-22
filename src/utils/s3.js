@@ -1,8 +1,10 @@
 const {
   PutObjectCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
 } = require('@aws-sdk/client-s3');
 const s3 = require('../config/s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 async function uploadFile({ key, buffer, contentType }) {
   const command = new PutObjectCommand({
@@ -16,15 +18,23 @@ async function uploadFile({ key, buffer, contentType }) {
   return key;
 }
 
-function getFileUrl(key) {
-  return `https://${process.enf.S3_BUCKET}.s3.amazonaws.com/${key}`;
+async function getFileUrl(key) {
+  const command = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: key,
+  });
+  return await getSignedUrl(s3, command, {
+    expiresIn: 60 * 60,
+  });
 }
 
 async function deleteFile(key) {
   await s3.send(
     new DeleteObjectsCommand({
-      bucket: process.env.S3_BUCKET,
-      key: key,
+      Bucket: process.env.S3_BUCKET,
+      Delete: {
+        Objects: [{ Key: key }],
+      },
     })
   );
 }

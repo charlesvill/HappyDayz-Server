@@ -10,7 +10,7 @@ const {
 } = require('../models/module.model');
 const sharp = require('sharp');
 const convert = require('heic-convert');
-const { uploadFile } = require('../utils/s3');
+const { uploadFile, getFileUrl } = require('../utils/s3');
 const { InternalServerError } = require('../utils/err');
 
 // Process a single file sequentially to minimize memory footprint
@@ -111,12 +111,27 @@ async function addModule(req, res, next) {
     return next(new InternalServerError(err));
   }
 }
+
 async function getAllByPage(req, res, next) {
   const { eventid: eventId, pageid: pageId } = req.params;
 
   try {
     const response = await getModulesByPageId(pageId);
-    res.status(200).json(response);
+    console.log('the whole lot: ', response);
+
+    const signedUrls = response.modules?.length
+      ? await Promise.all(
+          response.modules.map(async (record) => {
+            if (!record.data?.key) {
+              console.warn('Module missing key:', record.id);
+              return null;
+            }
+            return await getFileUrl(record.data.key);
+          })
+        )
+      : [];
+
+    res.status(200).json(signedUrls);
   } catch (err) {
     return next(new InternalServerError(err));
   }
