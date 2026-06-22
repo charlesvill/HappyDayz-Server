@@ -13,21 +13,7 @@ const moduleRouter = Router();
 
 moduleRouter.post(
   '/photo/:eventid/:pageid',
-  upload.array('files[]', 5)(req, res, (err) => {
-    if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({
-          message: 'Each file must be smaller than 10 MB.',
-        });
-      }
-    }
-
-    if (err) {
-      return next(err);
-    }
-
-    next();
-  }),
+  upload.array('files[]', 5),
   (req, res, next) => {
     console.log(req.files);
     next();
